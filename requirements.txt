@@ -1,0 +1,11 @@
+# --- Market data ---
+yfinance>=0.2.50          # Indices, stocks, ETFs, FX, futures
+pandas>=2.2.0             # Data manipulation
+numpy>=1.26.0
+requests>=2.32.0          # Generic HTTP (FRED, FedWatch scraping fallback)
+python-dateutil>=2.9.0
+pytz>=2024.1
+
+# --- LLM clients (only one is required at runtime; both listed for flexibility) ---
+openai>=1.50.0            # OpenAI / OpenAI-compatible endpoints
+anthropic>=0.39.0         # Claude

@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.venv/
+venv/
+env/
+.env
+.env.local
+
+# Build / dist
+build/
+dist/
+*.egg
+
+# Tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Data caches (raw fetched data is kept under data/, but local debug files ignored)
+*.log
+data/cache/
+data/tmp/
+
+# Generated artefacts that we don't want to commit
+*.tmp
+*.bak
