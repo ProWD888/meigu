@@ -127,8 +127,44 @@ python scripts/fetch_market_data.py --output data/latest.json \
 | `GEMINI_API_KEY` | 当 provider = gemini 时必需 | Gemini API key（[免费申请](https://aistudio.google.com/apikey)） |
 | `GEMINI_MODEL` | 可选 | 默认 `gemini-2.5-pro` |
 | `FRED_API_KEY` | 可选 | 抓取 FRED 数据时使用，留空会跳过 FRED 部分 |
+| `TELEGRAM_BOT_TOKEN` | 可选 | Telegram Bot 推送，留空会跳过推送步骤 |
+| `TELEGRAM_CHAT_ID` | 可选 | 接收日报的 chat / 频道 ID，与上者必须一起配置 |
 
 > 注：`fetch_market_data.py` 不依赖任何 API key 也能跑（yfinance / 美国财政部 / CME 都是公开数据），只是 FRED 部分会留白。
+
+---
+
+## Telegram Bot 推送（可选）
+
+启用后，每天日报生成成功后会自动：
+
+1. 发送一条**预览消息**（含日期、"今日一句话总结"、GitHub 完整报告链接）
+2. 把完整 Markdown 文件作为**附件**推送（约 15-30 KB），方便存档/离线阅读
+
+### 配置步骤
+
+#### 1. 创建 Bot 拿到 token
+
+- Telegram 内搜 **@BotFather** → `/newbot` → 起个名字
+- BotFather 会回复一段 token，形如 `1234567890:ABCDefghIjkLmNoPQRsTUVwxyZ-12345abcdef`
+- 把 token 加为仓库 secret `TELEGRAM_BOT_TOKEN`
+
+#### 2. 拿到 chat_id
+
+**方案 A：发到自己的私聊**
+
+- 在 Telegram 里给你刚创建的 bot 发任意一条消息（必须先发，否则 bot 没法主动联系你）
+- 浏览器打开：`https://api.telegram.org/bot<你的token>/getUpdates`
+- 在返回的 JSON 里找 `"chat":{"id": 123456789, ...}` 那个数字
+- 把数字加为 secret `TELEGRAM_CHAT_ID`
+
+**方案 B：发到自己创建的频道**
+
+- 在 Telegram 创建一个频道（Channel）→ 把你的 bot 添加为 admin（Post Messages 权限）
+- chat_id 用频道用户名（如 `@my_us_market_channel`）或数字 id（一般是负数，以 -100 开头）
+- 把 chat_id 加为 secret `TELEGRAM_CHAT_ID`
+
+> 配置完两个 secret 后，下一次 workflow 运行就会自动推送。**没配的话推送步骤会安静地跳过，不影响 GitHub 上的报告生成。**
 
 ---
 
