@@ -267,12 +267,16 @@ def main(argv: Optional[list] = None) -> int:
 
     full_prompt = build_prompt(template_text, market_data)
 
+    # NOTE: we deliberately use ``os.getenv("FOO") or DEFAULT`` rather than
+    # ``os.getenv("FOO", DEFAULT)``. GitHub Actions renders an unset secret as
+    # the empty string instead of leaving the env var unset, which would make
+    # the second form return ``""`` and silently bypass the default.
     if args.provider == "openai":
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             logger.error("OPENAI_API_KEY is not set")
             return 3
-        model = os.getenv("OPENAI_MODEL", DEFAULT_OPENAI_MODEL)
+        model = os.getenv("OPENAI_MODEL") or DEFAULT_OPENAI_MODEL
         base_url = os.getenv("OPENAI_BASE_URL") or None
         try:
             content = call_openai(full_prompt, model, base_url, api_key)
@@ -284,7 +288,7 @@ def main(argv: Optional[list] = None) -> int:
         if not api_key:
             logger.error("ANTHROPIC_API_KEY is not set")
             return 3
-        model = os.getenv("ANTHROPIC_MODEL", DEFAULT_ANTHROPIC_MODEL)
+        model = os.getenv("ANTHROPIC_MODEL") or DEFAULT_ANTHROPIC_MODEL
         try:
             content = call_anthropic(full_prompt, model, api_key)
         except Exception:
@@ -296,7 +300,7 @@ def main(argv: Optional[list] = None) -> int:
         if not api_key:
             logger.error("GEMINI_API_KEY (or GOOGLE_API_KEY) is not set")
             return 3
-        model = os.getenv("GEMINI_MODEL", DEFAULT_GEMINI_MODEL)
+        model = os.getenv("GEMINI_MODEL") or DEFAULT_GEMINI_MODEL
         try:
             content = call_gemini(full_prompt, model, api_key)
         except Exception:
