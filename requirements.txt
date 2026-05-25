@@ -6,6 +6,7 @@ requests>=2.32.0          # Generic HTTP (FRED, FedWatch scraping fallback)
 python-dateutil>=2.9.0
 pytz>=2024.1
 
-# --- LLM clients (only one is required at runtime; both listed for flexibility) ---
+# --- LLM clients (only one is required at runtime; all listed for flexibility) ---
 openai>=1.50.0            # OpenAI / OpenAI-compatible endpoints
 anthropic>=0.39.0         # Claude
+google-genai>=1.0.0       # Google Gemini (new official SDK)

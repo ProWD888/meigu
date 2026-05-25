@@ -73,6 +73,16 @@ export ANTHROPIC_API_KEY=sk-ant-...
 export ANTHROPIC_MODEL=claude-sonnet-4-5   # 可选
 ```
 
+**C. 使用 Google Gemini**
+
+```bash
+export LLM_PROVIDER=gemini
+export GEMINI_API_KEY=...                  # 也接受 GOOGLE_API_KEY
+export GEMINI_MODEL=gemini-2.5-pro         # 可选
+```
+
+> 申请免费 Gemini API key：https://aistudio.google.com/apikey
+
 然后：
 
 ```bash
@@ -108,12 +118,14 @@ python scripts/fetch_market_data.py --output data/latest.json \
 
 | Secret 名称 | 是否必需 | 说明 |
 | --- | --- | --- |
-| `LLM_PROVIDER` | 必需 | `openai` 或 `anthropic` |
+| `LLM_PROVIDER` | 必需 | `openai` / `anthropic` / `gemini` |
 | `OPENAI_API_KEY` | 当 provider = openai 时必需 | OpenAI / 兼容服务的 API key |
 | `OPENAI_MODEL` | 可选 | 默认 `gpt-4o` |
 | `OPENAI_BASE_URL` | 可选 | OpenAI 兼容代理地址 |
 | `ANTHROPIC_API_KEY` | 当 provider = anthropic 时必需 | Claude API key |
 | `ANTHROPIC_MODEL` | 可选 | 默认 `claude-sonnet-4-5` |
+| `GEMINI_API_KEY` | 当 provider = gemini 时必需 | Gemini API key（[免费申请](https://aistudio.google.com/apikey)） |
+| `GEMINI_MODEL` | 可选 | 默认 `gemini-2.5-pro` |
 | `FRED_API_KEY` | 可选 | 抓取 FRED 数据时使用，留空会跳过 FRED 部分 |
 
 > 注：`fetch_market_data.py` 不依赖任何 API key 也能跑（yfinance / 美国财政部 / CME 都是公开数据），只是 FRED 部分会留白。

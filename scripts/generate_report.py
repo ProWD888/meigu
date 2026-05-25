@@ -11,12 +11,15 @@ Provider selection
 ------------------
 
 The provider is chosen via the ``LLM_PROVIDER`` environment variable
-(``openai`` or ``anthropic``). The corresponding credentials must be present:
+(``openai``, ``anthropic``, or ``gemini``). The corresponding credentials must
+be present:
 
-* ``LLM_PROVIDER=openai``   ⇒ ``OPENAI_API_KEY`` (and optional ``OPENAI_MODEL``,
-  ``OPENAI_BASE_URL``).
+* ``LLM_PROVIDER=openai``    ⇒ ``OPENAI_API_KEY`` (and optional
+  ``OPENAI_MODEL``, ``OPENAI_BASE_URL``).
 * ``LLM_PROVIDER=anthropic`` ⇒ ``ANTHROPIC_API_KEY`` (and optional
   ``ANTHROPIC_MODEL``).
+* ``LLM_PROVIDER=gemini``    ⇒ ``GEMINI_API_KEY`` (and optional
+  ``GEMINI_MODEL``).
 
 Usage
 -----
@@ -45,6 +48,7 @@ logger = logging.getLogger("meigu.generate")
 
 DEFAULT_OPENAI_MODEL = "gpt-4o"
 DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-5"
+DEFAULT_GEMINI_MODEL = "gemini-2.5-pro"
 PLACEHOLDER = "{{MARKET_DATA_JSON}}"
 
 
@@ -148,6 +152,49 @@ def call_anthropic(prompt: str, model: str, api_key: str) -> str:
     return content
 
 
+def call_gemini(prompt: str, model: str, api_key: str) -> str:
+    """Call Google Gemini using the official google-genai SDK."""
+    try:
+        from google import genai
+        from google.genai import types
+    except ImportError as exc:
+        raise RuntimeError(
+            "google-genai package not installed. "
+            "Run `pip install -r requirements.txt`."
+        ) from exc
+
+    client = genai.Client(api_key=api_key)
+    logger.info("Calling Gemini model=%s", model)
+    response = client.models.generate_content(
+        model=model,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            temperature=0.2,
+            max_output_tokens=8192,
+            system_instruction=(
+                "You are a senior US equity market analyst. Always follow "
+                "the user's report structure exactly, write in 中文, and "
+                "never fabricate numbers. If a data field is null/missing, "
+                "write '暂无可靠数据'."
+            ),
+        ),
+    )
+    # `response.text` is a convenience accessor that joins all text parts.
+    content = (getattr(response, "text", "") or "").strip()
+    if not content:
+        # Fallback: walk candidates manually if `.text` is unavailable.
+        parts: list = []
+        for cand in getattr(response, "candidates", []) or []:
+            for part in getattr(getattr(cand, "content", None), "parts", []) or []:
+                text = getattr(part, "text", None)
+                if text:
+                    parts.append(text)
+        content = "".join(parts).strip()
+    if not content:
+        raise RuntimeError("Gemini returned empty content")
+    return content
+
+
 # --------------------------------------------------------------------------- #
 # Output handling
 # --------------------------------------------------------------------------- #
@@ -195,7 +242,7 @@ def main(argv: Optional[list] = None) -> int:
     parser.add_argument("--output", "-o", default=None,
                         help="Output Markdown path (default: reports/<report_date>.md)")
     parser.add_argument("--provider", default=os.getenv("LLM_PROVIDER", "openai"),
-                        choices=["openai", "anthropic"],
+                        choices=["openai", "anthropic", "gemini"],
                         help="LLM provider to use")
     parser.add_argument("--log-level", default=os.getenv("LOG_LEVEL", "INFO"))
     args = parser.parse_args(argv)
@@ -232,7 +279,7 @@ def main(argv: Optional[list] = None) -> int:
         except Exception:
             logger.exception("OpenAI call failed")
             return 4
-    else:  # anthropic
+    elif args.provider == "anthropic":
         api_key = os.getenv("ANTHROPIC_API_KEY")
         if not api_key:
             logger.error("ANTHROPIC_API_KEY is not set")
@@ -242,6 +289,18 @@ def main(argv: Optional[list] = None) -> int:
             content = call_anthropic(full_prompt, model, api_key)
         except Exception:
             logger.exception("Anthropic call failed")
+            return 4
+    else:  # gemini
+        # Accept GEMINI_API_KEY (preferred) or the older GOOGLE_API_KEY name.
+        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            logger.error("GEMINI_API_KEY (or GOOGLE_API_KEY) is not set")
+            return 3
+        model = os.getenv("GEMINI_MODEL", DEFAULT_GEMINI_MODEL)
+        try:
+            content = call_gemini(full_prompt, model, api_key)
+        except Exception:
+            logger.exception("Gemini call failed")
             return 4
 
     final_text = prepend_metadata(content, market_data, args.provider, model)
