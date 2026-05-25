@@ -37,6 +37,8 @@ jobs:
       OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       ANTHROPIC_MODEL: ${{ secrets.ANTHROPIC_MODEL }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_MODEL: ${{ secrets.GEMINI_MODEL }}
       FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
 
     steps:
@@ -92,7 +94,7 @@ jobs:
         if: steps.meta.outputs.skip != 'true'
         run: |
           if [ -z "$LLM_PROVIDER" ]; then
-            echo "::error::LLM_PROVIDER secret is not set (expected 'openai' or 'anthropic')"
+            echo "::error::LLM_PROVIDER secret is not set (expected 'openai', 'anthropic', or 'gemini')"
             exit 1
           fi
           if [ "$LLM_PROVIDER" = "openai" ] && [ -z "$OPENAI_API_KEY" ]; then
@@ -101,6 +103,10 @@ jobs:
           fi
           if [ "$LLM_PROVIDER" = "anthropic" ] && [ -z "$ANTHROPIC_API_KEY" ]; then
             echo "::error::ANTHROPIC_API_KEY secret is required when LLM_PROVIDER=anthropic"
+            exit 1
+          fi
+          if [ "$LLM_PROVIDER" = "gemini" ] && [ -z "$GEMINI_API_KEY" ]; then
+            echo "::error::GEMINI_API_KEY secret is required when LLM_PROVIDER=gemini"
             exit 1
           fi
 
