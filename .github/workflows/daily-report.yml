@@ -40,6 +40,9 @@ jobs:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GEMINI_MODEL: ${{ secrets.GEMINI_MODEL }}
       FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      REPORT_BRANCH: ${{ github.ref_name }}
 
     steps:
       - name: Checkout repository
@@ -130,6 +133,16 @@ jobs:
           fi
           git commit -m "report: ${{ steps.meta.outputs.report_date }} (auto)"
           git push origin HEAD:${{ github.ref_name }}
+
+      - name: Post to Telegram
+        # Always attempt the Telegram step when a report was produced. The
+        # script itself is a no-op (exit 0) when TELEGRAM_BOT_TOKEN or
+        # TELEGRAM_CHAT_ID is not configured, so this remains optional.
+        if: steps.meta.outputs.skip != 'true'
+        run: |
+          python scripts/post_to_telegram.py \
+            --report "${{ steps.meta.outputs.report_path }}" \
+            --report-date "${{ steps.meta.outputs.report_date }}"
 
       - name: Upload artifacts on failure
         if: failure()
